@@ -203,17 +203,16 @@ class HealthcareVectorDatabase:
                 processed_results.append({
                     'cpt_code': metadata['cpt_code'],
                     'procedure_name': metadata['procedure_name'],
-                    'base_cost': float(metadata['base_cost']) if metadata['base_cost'] is not None else 0.0,  # Ensure float conversion and handle None
-                    'provider_id': metadata['provider_id'],  # Add missing provider_id
+                    'base_cost': float(metadata['base_cost']) if metadata['base_cost'] is not None else 0.0,
+                    'provider_id': metadata['provider_id'],
                     'provider_name': metadata['provider_name'],
                     'location': metadata['location'],
                     'specialty': metadata['specialty'],
-                    'quality_rating': float(metadata['quality_rating']) if metadata['quality_rating'] is not None else 0.0,  # Ensure float conversion and handle None
-                    'relevance_score': relevance  # Now properly normalized
+                    'quality_rating': float(metadata['quality_rating']) if metadata['quality_rating'] is not None else 0.0,
+                    'relevance_score': relevance
                 })
         else:
             logger.warning("No results returned from vector database or results are None.")
-            # No results to process; processed_results will remain empty.
 
         return processed_results
 
@@ -226,9 +225,9 @@ class CostComparisonEngine:
     def __init__(self, vector_db: HealthcareVectorDatabase):
         self.vector_db = vector_db
         self.insurance_multipliers = {
-            'in_network': 0.7,  # 30% discount for in-network
-            'out_of_network': 1.2,  # 20% surcharge for out-of-network
-            'no_insurance': 1.0  # Full price
+            'in_network': 0.7,
+            'out_of_network': 1.2,
+            'no_insurance': 1.0
         }
         logger.info("Cost comparison engine initialized")
 
@@ -236,7 +235,6 @@ class CostComparisonEngine:
         """Calculate the actual cost a patient will pay for a procedure"""
         base_cost = procedure['base_cost']
 
-        # If no insurance, return full cost
         if not patient.insurance_plan:
             return {
                 'total_cost': base_cost,
@@ -249,28 +247,21 @@ class CostComparisonEngine:
 
         plan = patient.insurance_plan
 
-        # Determine if provider is in network
         is_in_network = procedure.get('provider_id') in plan.network_providers
         network_multiplier = self.insurance_multipliers['in_network'] if is_in_network else self.insurance_multipliers['out_of_network']
 
-        # Calculate negotiated rate
         negotiated_rate = base_cost * network_multiplier
 
-        # Apply copay if applicable
         procedure_type = procedure.get('specialty', 'general')
         copay = plan.copay.get(procedure_type, plan.copay.get('general', 0))
 
-        # Calculate deductible application
         deductible_applied = min(negotiated_rate, patient.deductible_remaining)
         remaining_cost = negotiated_rate - deductible_applied
 
-        # Calculate coinsurance on remaining cost
         coinsurance_applied = remaining_cost * plan.coinsurance if remaining_cost > 0 else 0
 
-        # Total patient cost
         patient_cost = copay + deductible_applied + coinsurance_applied
 
-        # Apply out-of-pocket maximum
         patient_cost = min(patient_cost, patient.out_of_pocket_remaining)
 
         return {
@@ -285,29 +276,24 @@ class CostComparisonEngine:
 
     def compare_costs(self, query: str, patient: PatientInfo, location: Optional[str] = None) -> List[Dict]:
         """Compare costs across multiple providers for a given procedure"""
-        # Search for relevant procedures
         procedures = self.vector_db.search_procedures(
             query=query,
             location=location,
             n_results=20
         )
 
-        # Calculate costs for each procedure
         cost_comparisons = []
         for proc in procedures:
             cost_breakdown = self.calculate_patient_cost(proc, patient)
-
             comparison_data = {
                 **proc,
                 **cost_breakdown,
-                'savings_potential': 0.0  # Will be calculated after sorting
+                'savings_potential': 0.0
             }
             cost_comparisons.append(comparison_data)
 
-        # Sort by patient cost
         cost_comparisons.sort(key=lambda x: x['patient_pays'])
 
-        # Calculate savings potential compared to most expensive option
         if cost_comparisons:
             max_cost = max(comp['patient_pays'] for comp in cost_comparisons)
             for comp in cost_comparisons:
@@ -349,11 +335,6 @@ class RecommendationEngine:
         logger.info("Recommendation engine initialized")
 
     def calculate_distance_score(self, patient_location: str, provider_location: str) -> float:
-        """
-        Calculate a simple distance score (in a real implementation,
-        this would use actual geocoding and distance calculation)
-        """
-        # Simplified distance scoring based on string similarity
         if patient_location.lower() in provider_location.lower():
             return 1.0
         elif any(word in provider_location.lower() for word in patient_location.lower().split()):
@@ -362,41 +343,25 @@ class RecommendationEngine:
             return 0.3
 
     def score_recommendation(self, procedure: Dict, patient: PatientInfo) -> float:
-        """Calculate a recommendation score for a procedure"""
-        # RELEVANCE SHOULD BE THE PRIMARY FACTOR!
-        relevance_score = max(0, procedure.get('relevance_score', 0))  # Ensure non-negative
-
-        # Cost score (lower cost = higher score)
-        max_reasonable_cost = 5000  # More reasonable maximum
+        relevance_score = max(0, procedure.get('relevance_score', 0))
+        max_reasonable_cost = 5000
         cost_score = max(0, (max_reasonable_cost - procedure['patient_pays']) / max_reasonable_cost)
-
-        # Quality score (normalize to 0-1)
         quality_score = procedure.get('quality_rating', 3.0) / 5.0
-
-        # Distance score
         distance_score = self.calculate_distance_score(patient.location, procedure['location'])
-
-        # Insurance network score
         network_score = 1.0 if procedure.get('is_in_network', False) else 0.5
 
-        # NEW WEIGHTED COMBINATION - PRIORITIZE RELEVANCE!
         total_score = (
-            0.5 * relevance_score +      # 50% relevance (most important!)
-            0.2 * cost_score +           # 20% cost
-            0.15 * quality_score +       # 15% quality
-            0.1 * distance_score +       # 10% distance
-            0.05 * network_score         # 5% network
+            0.5 * relevance_score +
+            0.2 * cost_score +
+            0.15 * quality_score +
+            0.1 * distance_score +
+            0.05 * network_score
         )
 
         return total_score
 
-    def recommend_procedures(self, query: str, patient: PatientInfo,
-                           top_n: int = 5) -> List[Dict]:
-        """Generate top recommendations for a patient's query"""
-        # Get cost comparisons
+    def recommend_procedures(self, query: str, patient: PatientInfo, top_n: int = 5) -> List[Dict]:
         cost_comparisons = self.cost_engine.compare_costs(query, patient, patient.location)
-
-        # Score each recommendation
         recommendations = []
         for comp in cost_comparisons:
             score = self.score_recommendation(comp, patient)
@@ -406,63 +371,42 @@ class RecommendationEngine:
                 'recommendation_reason': self._generate_reason(comp, patient)
             }
             recommendations.append(recommendation)
-
-        # Sort by recommendation score
         recommendations.sort(key=lambda x: x['recommendation_score'], reverse=True)
-
         return recommendations[:top_n]
 
     def _generate_reason(self, procedure: Dict, patient: PatientInfo) -> str:
-        """Generate a human-readable reason for the recommendation"""
         reasons = []
-
         if procedure.get('is_in_network', False):
             reasons.append("in your insurance network")
-
         if procedure['quality_rating'] >= 4.0:
             reasons.append("high quality rating")
-
-        if procedure['patient_pays'] < 500:  # Arbitrary threshold
+        if procedure['patient_pays'] < 500:
             reasons.append("low out-of-pocket cost")
-
         if patient.location.lower() in procedure['location'].lower():
             reasons.append("convenient location")
-
         if not reasons:
             reasons.append("good overall value")
-
         return f"Recommended due to: {', '.join(reasons)}"
 
-    def suggest_alternatives(self, primary_recommendation: Dict,
-                           all_options: List[Dict]) -> List[Dict]:
-        """Suggest alternative options like telehealth, generic alternatives, etc."""
+    def suggest_alternatives(self, primary_recommendation: Dict, all_options: List[Dict]) -> List[Dict]:
         alternatives = []
-
-        # Look for telehealth options
         telehealth_options = [opt for opt in all_options
-                            if 'telehealth' in opt.get('specialty', '').lower() or
-                            'virtual' in opt.get('provider_name', '').lower()]
-
+                              if 'telehealth' in opt.get('specialty', '').lower() or
+                              'virtual' in opt.get('provider_name', '').lower()]
         if telehealth_options:
-            alternatives.extend(telehealth_options[:2])  # Add top 2 telehealth options
-
-        # Look for community health centers (typically cheaper)
+            alternatives.extend(telehealth_options[:2])
         community_options = [opt for opt in all_options
-                           if 'community' in opt.get('provider_name', '').lower() or
-                           'clinic' in opt.get('provider_name', '').lower()]
-
+                             if 'community' in opt.get('provider_name', '').lower() or
+                             'clinic' in opt.get('provider_name', '').lower()]
         if community_options:
-            alternatives.extend(community_options[:2])  # Add top 2 community options
-
-        # Remove duplicates and limit results
+            alternatives.extend(community_options[:2])
         seen_providers = set()
         unique_alternatives = []
         for alt in alternatives:
             if alt['provider_id'] not in seen_providers:
                 seen_providers.add(alt['provider_id'])
                 unique_alternatives.append(alt)
-
-        return unique_alternatives[:3]  # Return top 3 alternatives
+        return unique_alternatives[:3]
 
 class HealthcareAIAssistant:
     """
@@ -480,7 +424,6 @@ class HealthcareAIAssistant:
     }
 
     def __init__(self):
-        """Initialize the Healthcare AI Assistant with all components"""
         self.vector_db = HealthcareVectorDatabase()
         self.cost_engine = CostComparisonEngine(self.vector_db)
         self.recommendation_engine = RecommendationEngine(self.cost_engine)
@@ -488,8 +431,6 @@ class HealthcareAIAssistant:
         logger.info("Healthcare AI Assistant initialized")
 
     def load_sample_data(self):
-        """Load sample healthcare data for demonstration"""
-        # Sample procedures
         sample_procedures = [
             HealthcareProcedure("99213", "Office Visit - Established Patient", 150.0, "PROV001",
                               "Houston Medical Center", "Houston, TX", "Primary Care",
@@ -513,26 +454,21 @@ class HealthcareAIAssistant:
                               "Memorial Hermann", "Houston, TX", "Primary Care",
                               ["BlueCross", "Aetna", "UnitedHealth", "Cigna"], 4.3)
         ]
-
-        # Add procedures to vector database
         self.vector_db.add_procedures(sample_procedures)
         self.sample_data_loaded = True
         logger.info("Sample data loaded successfully")
 
     def create_sample_patient(self, has_insurance: bool = True) -> PatientInfo:
-        """Create a sample patient for testing"""
         if has_insurance:
-            # Sample insurance plan
             insurance_plan = InsurancePlan(
                 plan_id="BC001",
                 plan_name="BlueCross Silver Plan",
                 deductible=2000.0,
                 copay={"Primary Care": 25.0, "Specialist": 50.0, "general": 30.0},
-                coinsurance=0.2,  # 20% coinsurance
+                coinsurance=0.2,
                 out_of_pocket_max=6000.0,
                 network_providers=["PROV001", "PROV002", "PROV004", "PROV005", "PROV007"]
             )
-
             patient = PatientInfo(
                 patient_id="PAT001",
                 insurance_plan=insurance_plan,
@@ -541,7 +477,6 @@ class HealthcareAIAssistant:
                 out_of_pocket_remaining=5500.0
             )
         else:
-            # Uninsured patient
             patient = PatientInfo(
                 patient_id="PAT002",
                 insurance_plan=None,
@@ -549,34 +484,24 @@ class HealthcareAIAssistant:
                 deductible_remaining=0.0,
                 out_of_pocket_remaining=0.0
             )
-
         return patient
 
     def process_query(self, query: str, patient: PatientInfo) -> Dict[str, Any]:
-        """Process a patient's query and return comprehensive recommendations, including CMS data"""
         if not self.sample_data_loaded:
             self.load_sample_data()
-
         try:
-            # Get recommendations from existing engine
             recommendations = self.recommendation_engine.recommend_procedures(
                 query, patient, top_n=5
             )
-
-            # --- Integrate CMS ingestion pipeline ---
             try:
                 from data_ingestion.module.cms_ingestion.cms_ingestion import ingest_pipeline
                 cms_chunks = ingest_pipeline()
-                # Filter CMS chunks by query keyword (simple match)
                 cms_recs = [chunk for chunk in cms_chunks if query.lower() in chunk.get('text', '').lower()]
             except Exception as cms_e:
                 logger.warning(f"CMS ingestion failed: {cms_e}")
                 cms_recs = []
-
-            # Combine recommendations
             all_recommendations = recommendations.copy()
             if cms_recs:
-                # Format CMS chunks for frontend display
                 for chunk in cms_recs:
                     all_recommendations.append({
                         'procedure_name': chunk.get('procedure_name', 'CMS Procedure'),
@@ -587,19 +512,12 @@ class HealthcareAIAssistant:
                         'relevance_score': '',
                         'reason': f"Sourced from CMS data. See {chunk.get('source_url', '')}"
                     })
-
             if not all_recommendations:
                 return {"error": "No procedures found for your query"}
-
-            # Get cost summary
             cost_summary = self.cost_engine.generate_cost_summary(all_recommendations)
-
-            # Get alternatives
             alternatives = self.recommendation_engine.suggest_alternatives(
                 all_recommendations[0], all_recommendations
             )
-
-            # Format response
             response = {
                 "query": query,
                 "patient_location": patient.location,
@@ -611,9 +529,7 @@ class HealthcareAIAssistant:
                     all_recommendations[0], patient
                 )
             }
-
             return response
-
         except Exception as e:
             import traceback
             logger.error(f"Error processing query: {str(e)}")
@@ -621,9 +537,7 @@ class HealthcareAIAssistant:
             return {"error": f"Failed to process query: {str(e)}", "details": traceback.format_exc()}
 
     def _generate_financial_guidance(self, best_option: Dict, patient: PatientInfo) -> Dict:
-        """Generate personalized financial guidance"""
         guidance = {}
-
         if patient.insurance_plan:
             guidance["insurance_status"] = f"You have {patient.insurance_plan.plan_name}"
             guidance["deductible_info"] = f"Remaining deductible: ${patient.deductible_remaining:.2f}"
@@ -631,22 +545,18 @@ class HealthcareAIAssistant:
         else:
             guidance["insurance_status"] = "No insurance detected"
             guidance["cash_pay_advice"] = "Consider asking providers about cash pay discounts"
-
         guidance["estimated_cost"] = f"${best_option['patient_pays']:.2f}"
         guidance["potential_savings"] = f"${best_option.get('savings_potential', 0):.2f} vs highest option"
-
         return guidance
 
-<<<<<<< HEAD
     def get_data_from_parse(self):
+        """
+        Fetch data from Back4app (Parse) using the configured API URL and headers.
+        Returns the JSON response from the Parse server.
+        """
         import requests
         response = requests.get(self.PARSE_API_URL, headers=self.headers)
         return response.json()
-=======
-    def get_data_from_parse():
-         response = requests.get(PARSE_API_URL, headers=headers)
-         return response.json()
->>>>>>> 0d829ec149a7e3c525789bcca200b56925fe31a4
 
     def save_data_to_parse(self, data):
         import requests
@@ -654,34 +564,23 @@ class HealthcareAIAssistant:
         return response.json()
 
 def run_comprehensive_test():
-    """Run a comprehensive test of the Healthcare AI Assistant"""
     print("Healthcare AI Assistant - Comprehensive Test")
     print("=" * 60)
-
-    # Initialize the system
     assistant = HealthcareAIAssistant()
-
-    # Create test patients
     insured_patient = assistant.create_sample_patient(has_insurance=True)
     uninsured_patient = assistant.create_sample_patient(has_insurance=False)
-
-    # Test scenarios for insured patient
     print("\nINSURED PATIENT TESTING")
     print("-" * 30)
-
     insured_scenarios = [
         ("I need an MRI for my brain", "Should find MRI procedure"),
         ("I need knee surgery", "Should find orthopedic surgery"),
         ("I need blood work done", "Should find laboratory tests"),
         ("I need a routine checkup", "Should find office visit or wellness exam")
     ]
-
     for query, expectation in insured_scenarios:
         print(f"\nQuery: '{query}'")
         print(f"Expected: {expectation}")
-
         result = assistant.process_query(query, insured_patient)
-
         if "error" not in result:
             top_rec = result['recommendations'][0]
             print(f"Result: {top_rec['provider_name']} - {top_rec['procedure_name']}")
@@ -690,31 +589,22 @@ def run_comprehensive_test():
             print(f"Relevance: {top_rec['relevance_score']:.3f}")
         else:
             print(f"Error: {result['error']}")
-
-    # Test scenarios for uninsured patient
     print("\n\nUNINSURED PATIENT TESTING")
     print("-" * 30)
-
     uninsured_query = "I need a checkup but have no insurance"
     print(f"\nQuery: '{uninsured_query}'")
-
     result = assistant.process_query(uninsured_query, uninsured_patient)
-
     if "error" not in result:
         print("Top 3 cash pay options:")
         for i, rec in enumerate(result['recommendations'][:3], 1):
             print(f"{i}. {rec['provider_name']}: ${rec['patient_pays']:.2f}")
-
         print(f"\nFinancial Guidance:")
         for key, value in result['financial_guidance'].items():
             print(f"  {key}: {value}")
     else:
         print(f"Error: {result['error']}")
-
     print("\n" + "=" * 60)
     print("Comprehensive test completed")
 
-
-# Example usage and testing
 if __name__ == "__main__":
     run_comprehensive_test()
