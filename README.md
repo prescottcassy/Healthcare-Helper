@@ -57,7 +57,34 @@ pip install -r requirements.txt
 - Beginner-friendly onboarding and reproducible environments
 - Playful, welcoming UI design
 
-  
+  ## Frontend Setup
+
+1. **Install dependencies:**
+   ```sh
+   cd frontend/frontend_folder
+   npm install
+   ```
+
+2. **Configure the backend URL:**
+   - Create a file named `.env` in the `frontend/frontend_folder` directory.
+   - Add the following line to the `.env` file:
+     ```
+     REACT_APP_BACKEND_URL=<your-backend-url>
+     ```
+     Replace `<your-backend-url>` with the URL where your backend is running (for example, your Codespace URL or `http://localhost:8000`).
+
+3. **Start the frontend:**
+   ```sh
+   npm start
+   ```
+
+4. **Open the app:**
+   ```sh
+   $BROWSER http://localhost:3000
+   ```
+
+**Note:**  
+If you are running the backend in a Codespace or remote environment, make sure to use the correct forwarded/public URL for your backend.
 
 
 

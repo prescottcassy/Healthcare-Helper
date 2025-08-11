@@ -1,5 +1,12 @@
 import React, { useState } from "react";
 
+// Use environment variable for backend URL
+// Use environment variable for backend URL, with fallback and validation
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
+if (!process.env.REACT_APP_BACKEND_URL) {
+  console.warn("REACT_APP_BACKEND_URL is not set. Falling back to http://localhost:5000. Set the environment variable to avoid this warning.");
+}
+
 function QueryForm() {
   const [query, setQuery] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
@@ -8,7 +15,7 @@ function QueryForm() {
 
   async function getChatResponse() {
     setLoading(true);
-    const response = await fetch("https://healthcare-helper.onrender.com/api/chat/chat", {
+    const response = await fetch(`${BACKEND_URL}/api/chat/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query })
@@ -26,7 +33,7 @@ function QueryForm() {
     setLoading(true);
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetch("https://healthcare-helper.onrender.com/api/insurance/analyze", {
+    const response = await fetch(`${BACKEND_URL}/api/insurance/upload`, {
       method: "POST",
       body: formData
     });

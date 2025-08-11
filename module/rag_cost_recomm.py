@@ -637,10 +637,16 @@ class HealthcareAIAssistant:
 
         return guidance
 
+<<<<<<< HEAD
     def get_data_from_parse(self):
         import requests
         response = requests.get(self.PARSE_API_URL, headers=self.headers)
         return response.json()
+=======
+    def get_data_from_parse():
+         response = requests.get(PARSE_API_URL, headers=headers)
+         return response.json()
+>>>>>>> 0d829ec149a7e3c525789bcca200b56925fe31a4
 
     def save_data_to_parse(self, data):
         import requests

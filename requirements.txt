@@ -22,3 +22,4 @@ reportlab
 qrcode
 pydantic
 striprtf
+python-dotenv
