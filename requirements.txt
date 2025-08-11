@@ -13,6 +13,8 @@ fastapi
 starlette
 uvicorn [standard]
 python-multipart
+pytesseract
+tesseract-ocr
 
 opencv-python
 numpy
