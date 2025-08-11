@@ -20,7 +20,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://prescottcassy.github.io"],  # Restrict to GitHub Pages frontend
+    allow_origins=[
+        "https://prescottcassy.github.io",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ],  # Allow GitHub Pages and local dev
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

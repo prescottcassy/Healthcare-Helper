@@ -26,7 +26,7 @@ function QueryForm() {
     setLoading(true);
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetch("https://healthcare-helper.onrender.com/api/insurance/analyze", {
+    const response = await fetch("https://healthcare-helper-may0.onrender.com/api/insurance/analyze", {
       method: "POST",
       body: formData
     });
