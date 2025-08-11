@@ -24,9 +24,6 @@ class EntitiesResponse(BaseModel):
 async def extract_entities(request: QueryRequest):
     # Initialize the Healthcare AI Assistant
     assistant = HealthcareAIAssistant()
-    # For now, create a sample patient with insurance. You can expand this to use user data.
-    patient = assistant.create_sample_patient(has_insurance=True)
-    # Process the user's query
-    result = assistant.process_query(request.text, patient)
-    # Return the full result as a dict
-    return EntitiesResponse(response=result)
+    # Fetch data from Back4app (Parse) and return it to the frontend
+    parse_data = assistant.get_data_from_parse()
+    return EntitiesResponse(response=parse_data)

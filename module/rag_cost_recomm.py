@@ -637,12 +637,14 @@ class HealthcareAIAssistant:
 
         return guidance
 
-    def get_data_from_parse():
-    response = requests.get(PARSE_API_URL, headers=headers)
-    return response.json()
+    def get_data_from_parse(self):
+        import requests
+        response = requests.get(self.PARSE_API_URL, headers=self.headers)
+        return response.json()
 
-    def save_data_to_parse(data):
-        response = requests.post(PARSE_API_URL, headers=headers, json=data)
+    def save_data_to_parse(self, data):
+        import requests
+        response = requests.post(self.PARSE_API_URL, headers=self.headers, json=data)
         return response.json()
 
 def run_comprehensive_test():
