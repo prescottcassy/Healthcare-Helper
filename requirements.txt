@@ -3,7 +3,6 @@ chromadb
 pandas
 requests
 pillow
-pytesseract
 langchain
 langchain-community
 faiss-cpu
@@ -13,6 +12,7 @@ fastapi
 starlette
 uvicorn [standard]
 python-multipart
+# Requires system package: tesseract-ocr (install with 'apt-get install tesseract-ocr')
 pytesseract
 
 opencv-python
