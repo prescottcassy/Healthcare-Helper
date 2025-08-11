@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import insurance, nlp, chat
+from backend_folder.routers import insurance, nlp, chat
 import os
 
-import dotenv
 from dotenv import load_dotenv
 load_dotenv()  # <-- Add this line to load .env variables
 
