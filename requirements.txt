@@ -10,6 +10,7 @@ faiss-cpu
 python-dotenv
 fastai
 fastapi 
+starlette
 uvicorn [standard]
 python-multipart
 
