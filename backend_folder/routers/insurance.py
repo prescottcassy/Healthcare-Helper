@@ -8,3 +8,9 @@ async def upload_insurance(file: UploadFile = File(...)):
     contents = await file.read()
     result = extract_insurance_info(contents)
     return {"extracted_data": result}
+
+@router.post("/analyze")
+async def analyze_insurance(file: UploadFile = File(...)):
+    contents = await file.read()
+    result = extract_insurance_info(contents)
+    return {"analysis": result}
