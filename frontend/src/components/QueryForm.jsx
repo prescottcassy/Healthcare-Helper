@@ -8,7 +8,7 @@ function QueryForm() {
 
   async function getChatResponse() {
     setLoading(true);
-    const response = await fetch("https://healthcare-helper-may0.onrender.com/api/chat/chat", {
+    const response = await fetch("https://healthcare-helper-pt6e.onrender.com/api/chat/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query })

@@ -7,11 +7,11 @@ from PIL import Image
 from pdf2image import convert_from_path
 import pytesseract
 
-from langchain.document_loaders import CSVLoader
+from langchain_community.document_loaders import CSVLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.chat_models import ChatOpenAI
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -32,7 +32,7 @@ def build_vector_db(chunks):
     return db.as_retriever(search_kwargs={"k": 3})
 
 def setup_llm_chain(retriever):
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    llm = ChatOpenAI(temperature=0)
     return RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
 
 def get_drugs_for_symptom(symptom: str):
