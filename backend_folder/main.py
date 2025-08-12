@@ -24,7 +24,7 @@ def health():
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://prescottcassy.github.io/Healthcare-Helper/"",
+        "https://prescottcassy.github.io/Healthcare-Helper/",
         "http://localhost:3000",
         "https://crispy-garbanzo-94rp7q5xv4737jwg-3000.app.github.dev",  # Codespace frontend
 
