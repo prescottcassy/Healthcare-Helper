@@ -25,10 +25,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://prescottcassy.github.io/Healthcare-Helper/",
+        "http://localhost:3000",
     ],  # Allow GitHub Pages and local dev
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
 app.include_router(insurance.router, prefix="/api/insurance", tags=["Insurance"])
