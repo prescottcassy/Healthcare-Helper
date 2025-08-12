@@ -24,7 +24,7 @@ def health():
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://prescottcassy.github.io/Healthcare-Helper/",
+        "https://prescottcassy.github.io",
         "http://localhost:3000",
     ],  # Allow GitHub Pages and local dev
     allow_credentials=True,
