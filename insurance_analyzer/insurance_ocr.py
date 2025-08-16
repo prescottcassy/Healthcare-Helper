@@ -11,6 +11,7 @@ def extract_text_from_image(image_path: str) -> str:
         raise ValueError(f"Could not read image: {image_path}")
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     text = pytesseract.image_to_string(gray)
+    print("[DEBUG] OCR Extracted Text:\n", text)  # Log
     return text
 
 # Example function to extract insurance fields from OCR text
