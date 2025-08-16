@@ -28,8 +28,8 @@ app.add_middleware(
         "http://localhost:3000",
     ],  # Allow GitHub Pages and local dev
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Authorization", "Content-Type", "Accept"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(insurance.router, prefix="/api/insurance", tags=["Insurance"])
