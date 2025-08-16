@@ -47,22 +47,22 @@ def extract_insurance_fields(text: str) -> Dict[str, str]:
             fields[key] = match.group(1).strip()
 
     # Robust extraction for copay and deductible (handles line breaks, whitespace, end-of-line)
-    copay_match = re.search(r'(\$\d+|No)\s*Copay', text, re.IGNORECASE | re.MULTILINE)
+    # Even more robust copay/deductible extraction: match across line breaks, any whitespace
+    copay_match = re.search(r'(\$\d+|No)\s*Copay', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
     if not copay_match:
-        # Try to match 'Copay' at end of line or with extra whitespace
-        copay_match = re.search(r'(\$\d+|No)\s*Copay\s*$', text, re.IGNORECASE | re.MULTILINE)
+        copay_match = re.search(r'Copay\s*:?\s*(\$\d+|No)', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
     if not copay_match:
-        # Try to match 'Copay' on its own line
-        copay_match = re.search(r'Copay\s*:?\s*(\$\d+|No)', text, re.IGNORECASE | re.MULTILINE)
+        # Try to match 'No Copay' or '$X Copay' even if split by line breaks
+        copay_match = re.search(r'(No|\$\d+)\s*\n*\s*Copay', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
     if copay_match:
         val = copay_match.group(1)
         fields['copay'] = val if val.lower() != 'no' else '0'
 
-    deductible_match = re.search(r'(\$\d+|No)\s*Deductible', text, re.IGNORECASE | re.MULTILINE)
+    deductible_match = re.search(r'(\$\d+|No)\s*Deductible', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
     if not deductible_match:
-        deductible_match = re.search(r'(\$\d+|No)\s*Deductible\s*$', text, re.IGNORECASE | re.MULTILINE)
+        deductible_match = re.search(r'Deductible\s*:?\s*(\$\d+|No)', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
     if not deductible_match:
-        deductible_match = re.search(r'Deductible\s*:?\s*(\$\d+|No)', text, re.IGNORECASE | re.MULTILINE)
+        deductible_match = re.search(r'(No|\$\d+)\s*\n*\s*Deductible', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
     if deductible_match:
         val = deductible_match.group(1)
         fields['deductible'] = val if val.lower() != 'no' else '0'
