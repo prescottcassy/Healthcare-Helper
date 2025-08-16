@@ -40,9 +40,10 @@ def get_drugs_for_symptom_endpoint(symptom: str):
 
 @router.post("/extract_text_from_card")
 def extract_text_from_card_endpoint(file: UploadFile = File(...)):
-    with open(file.filename, "wb") as f:
+    filename = file.filename if file.filename is not None else "uploaded_file"
+    with open(filename, "wb") as f:
         f.write(file.file.read())
-    text = ins_llm_loader.extract_text_from_card(file.filename)
+    text = ins_llm_loader.extract_text_from_card(filename)
     return {"text": text}
 
 @router.post("/lookup_insurance")

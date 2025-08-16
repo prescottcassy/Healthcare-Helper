@@ -52,6 +52,7 @@ def extract_insurance_fields(text: str) -> Dict[str, str]:
         fields["prescription_drug"] = rx_match.group(1).strip()
     if preventive_match:
         fields["preventive_care"] = preventive_match.group(1).strip()
+    fields["raw_text"] = text  # Add raw OCR text for debugging
     return fields
 
 # Main function to run OCR and extract fields

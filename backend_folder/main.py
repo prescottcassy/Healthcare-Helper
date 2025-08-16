@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import insurance, nlp, chat
+from .routers import insurance, nlp, chat, llm
 import os
 
 from dotenv import load_dotenv
@@ -35,6 +35,7 @@ app.add_middleware(
 app.include_router(insurance.router, prefix="/api/insurance", tags=["Insurance"])
 app.include_router(nlp.router, prefix="/api/nlp", tags=["NLP"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+app.include_router(llm.router, prefix="/api/llm", tags=["LLM"])
 
 @app.get("/")
 def root():
