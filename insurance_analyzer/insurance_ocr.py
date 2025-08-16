@@ -46,17 +46,29 @@ def extract_insurance_fields(text: str) -> Dict[str, str]:
         if match:
             fields[key] = match.group(1).strip()
 
+    # Enhanced extraction for copay and deductible
+    # Look for '$X Copay', 'No Copay', '$X Deductible', 'No Deductible'
+    copay_match = re.search(r'(\$\d+|No)\s*Copay', text, re.IGNORECASE)
+    if copay_match:
+        val = copay_match.group(1)
+        fields['copay'] = val if val.lower() != 'no' else '0'
+
+    deductible_match = re.search(r'(\$\d+|No)\s*Deductible', text, re.IGNORECASE)
+    if deductible_match:
+        val = deductible_match.group(1)
+        fields['deductible'] = val if val.lower() != 'no' else '0'
+
     # Generic extraction for all $-amounts and copay/deductible-like fields
-    dollar_fields = re.findall(r"([A-Za-z ]+?)[:\s\-]+\$([0-9]+(?:/[0-9]+)*(?:%|))", text)
+    dollar_fields = re.findall(r'([A-Za-z ]+?)[:\s\-]+\$([0-9]+(?:/[0-9]+)*(?:%|))', text)
     for label, value in dollar_fields:
-        label_key = label.strip().lower().replace(" ", "_")
+        label_key = label.strip().lower().replace(' ', '_')
         if label_key not in fields:
             fields[label_key] = value.strip()
 
     # Try to extract all key-value pairs (label: value)
-    key_value_pairs = re.findall(r"([A-Za-z][A-Za-z0-9 /-]+)[:\s]+([A-Za-z0-9$%/., -]+?)(?= [A-Z][a-zA-Z]+:|$)", text)
+    key_value_pairs = re.findall(r'([A-Za-z][A-Za-z0-9 /-]+)[:\s]+([A-Za-z0-9$%/., -]+?)(?= [A-Z][a-zA-Z]+:|$)', text)
     for label, value in key_value_pairs:
-        label_key = label.strip().lower().replace(" ", "_").replace("-", "_")
+        label_key = label.strip().lower().replace(' ', '_').replace('-', '_')
         if label_key not in fields and len(value.strip()) > 0:
             fields[label_key] = value.strip()
     fields["raw_text"] = text  # Add raw OCR text for debugging
