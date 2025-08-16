@@ -14,7 +14,6 @@ uvicorn [standard]
 python-multipart
 # Requires system package: tesseract-ocr (install with 'apt-get install tesseract-ocr')
 pytesseract
-tempfile
 
 opencv-python
 numpy
