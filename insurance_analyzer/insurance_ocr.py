@@ -17,17 +17,17 @@ def extract_text_from_image(image_path: str) -> str:
 
 def extract_insurance_fields(text: str) -> Dict[str, str]:
     fields = {}
-    # Add more patterns as needed
+    
     name_match = re.search(r"Subscriber Name[:\s]*([A-Za-z .]+)", text, re.IGNORECASE)
     id_match = re.search(r"Subscriber ID[:\s]*([A-Z0-9]+)", text, re.IGNORECASE)
     group_match = re.search(r"Group No[:\s]*([0-9]+)", text, re.IGNORECASE)
     rxbin_match = re.search(r"RxBin/Group[:\s]*([0-9]+)", text, re.IGNORECASE)
     date_match = re.search(r"Date Issued[:\s]*([0-9/]+)", text, re.IGNORECASE)
-    primary_match = re.search(r"Primary[:\s]*\\$?([0-9]+)", text, re.IGNORECASE)
-    specialist_match = re.search(r"Specialist[:\s]*\\$?([0-9]+)", text, re.IGNORECASE)
-    urgent_match = re.search(r"Urgent Care[:\s]*\\$?([0-9]+)", text, re.IGNORECASE)
-    er_match = re.search(r"ER[:\s]*\\$?([0-9]+)", text, re.IGNORECASE)
-    rx_match = re.search(r"Prescription Drug[:\s]*\\$?([\\d/\\$%]+)", text, re.IGNORECASE)
+    primary_match = re.search(r"Primary[:\s]*\$?([0-9]+)", text, re.IGNORECASE)
+    specialist_match = re.search(r"Specialist[:\s]*\$?([0-9]+)", text, re.IGNORECASE)
+    urgent_match = re.search(r"Urgent Care[:\s]*\$?([0-9]+)", text, re.IGNORECASE)
+    er_match = re.search(r"ER[:\s]*\$?([0-9]+)", text, re.IGNORECASE)
+    rx_match = re.search(r"Prescription Drug[:\s]*([\\$0-9/ %]+)", text, re.IGNORECASE)
     preventive_match = re.search(r"Preventive Care[:\s]*([A-Za-z ]+)", text, re.IGNORECASE)
 
     if name_match:
