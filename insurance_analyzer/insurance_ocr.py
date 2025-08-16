@@ -46,14 +46,23 @@ def extract_insurance_fields(text: str) -> Dict[str, str]:
         if match:
             fields[key] = match.group(1).strip()
 
-    # Enhanced extraction for copay and deductible
-    # Look for '$X Copay', 'No Copay', '$X Deductible', 'No Deductible'
-    copay_match = re.search(r'(\$\d+|No)\s*Copay', text, re.IGNORECASE)
+    # Robust extraction for copay and deductible (handles line breaks, whitespace, end-of-line)
+    copay_match = re.search(r'(\$\d+|No)\s*Copay', text, re.IGNORECASE | re.MULTILINE)
+    if not copay_match:
+        # Try to match 'Copay' at end of line or with extra whitespace
+        copay_match = re.search(r'(\$\d+|No)\s*Copay\s*$', text, re.IGNORECASE | re.MULTILINE)
+    if not copay_match:
+        # Try to match 'Copay' on its own line
+        copay_match = re.search(r'Copay\s*:?\s*(\$\d+|No)', text, re.IGNORECASE | re.MULTILINE)
     if copay_match:
         val = copay_match.group(1)
         fields['copay'] = val if val.lower() != 'no' else '0'
 
-    deductible_match = re.search(r'(\$\d+|No)\s*Deductible', text, re.IGNORECASE)
+    deductible_match = re.search(r'(\$\d+|No)\s*Deductible', text, re.IGNORECASE | re.MULTILINE)
+    if not deductible_match:
+        deductible_match = re.search(r'(\$\d+|No)\s*Deductible\s*$', text, re.IGNORECASE | re.MULTILINE)
+    if not deductible_match:
+        deductible_match = re.search(r'Deductible\s*:?\s*(\$\d+|No)', text, re.IGNORECASE | re.MULTILINE)
     if deductible_match:
         val = deductible_match.group(1)
         fields['deductible'] = val if val.lower() != 'no' else '0'
