@@ -7,6 +7,5 @@ def extract_insurance_info(file_bytes: bytes) -> dict:
         tmp.write(file_bytes)
         tmp.flush()
         result = insurance_ocr.analyze_insurance_card(tmp.name)
-    return result
-
-return
+        return result
+    
