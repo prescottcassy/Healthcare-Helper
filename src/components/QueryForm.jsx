@@ -32,7 +32,8 @@ function QueryForm() {
     });
     const data = await response.json();
     // Store extracted fields as plain data, not JSX
-    let extractedFields = data.extracted_data;
+  // Use data.analysis for /api/insurance/analyze endpoint
+  let extractedFields = data.analysis;
     setChatHistory(prev => [...prev, {
       query: `Uploaded file: ${file.name}`,
       response: {
