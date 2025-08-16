@@ -10,7 +10,13 @@ def extract_text_from_image(image_path: str) -> str:
     if image is None:
         raise ValueError(f"Could not read image: {image_path}")
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    text = pytesseract.image_to_string(gray)
+    # Resize for better OCR (optional, adjust as needed)
+    gray = cv2.resize(gray, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+    # Apply thresholding
+    _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
+    text = pytesseract.image_to_string(thresh)
+    # Clean up text
+    text = text.replace('\n', ' ').replace('\r', ' ').strip()
     return text
 
 # Example function to extract insurance fields from OCR text
