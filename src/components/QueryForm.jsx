@@ -31,9 +31,25 @@ function QueryForm() {
       body: formData
     });
     const data = await response.json();
+    // Prepare a user-friendly display of extracted fields if present
+    let extractedFields = data.extracted_data;
+    let extractedFieldsDisplay = null;
+    if (extractedFields && typeof extractedFields === 'object' && Object.keys(extractedFields).length > 0) {
+      extractedFieldsDisplay = (
+        <ul style={{ margin: 0, paddingLeft: 20 }}>
+          {Object.entries(extractedFields).map(([key, value]) => (
+            <li key={key}><strong>{key}:</strong> {String(value)}</li>
+          ))}
+        </ul>
+      );
+    }
     setChatHistory(prev => [...prev, {
       query: `Uploaded file: ${file.name}`,
-      response: { answer: "Extracted Data:", extracted_text: JSON.stringify(data.extracted_data, null, 2) }
+      response: {
+        answer: "Extracted Data:",
+        extracted_text: JSON.stringify(data.extracted_data, null, 2),
+        extractedFieldsDisplay
+      }
     }]);
     setLoading(false);
   }
@@ -100,9 +116,12 @@ function QueryForm() {
                       <pre>{JSON.stringify(chat.response.coverage, null, 2)}</pre>
                     </details>
                   )}
+                  {/* Show extracted fields directly if present */}
+                  {chat.response.extractedFieldsDisplay}
+                  {/* Show raw extracted text as expandable details */}
                   {chat.response.extracted_text && (
                     <details className="bubble-details">
-                      <summary>Extracted Text</summary>
+                      <summary>Extracted Text (Raw JSON)</summary>
                       <pre>{chat.response.extracted_text}</pre>
                     </details>
                   )}
