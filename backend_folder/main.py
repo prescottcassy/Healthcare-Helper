@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend_folder.routers import insurance, nlp, chat
+from .routers import insurance, nlp, chat
 import os
 
 from dotenv import load_dotenv
