@@ -24,40 +24,41 @@ def extract_text_from_image(image_path: str) -> str:
 def extract_insurance_fields(text: str) -> Dict[str, str]:
     fields = {}
     
-    name_match = re.search(r"Subscriber Name[:\s]*([A-Za-z .]+)", text, re.IGNORECASE)
-    id_match = re.search(r"Subscriber ID[:\s]*([A-Z0-9]+)", text, re.IGNORECASE)
-    group_match = re.search(r"Group No[:\s]*([0-9]+)", text, re.IGNORECASE)
-    rxbin_match = re.search(r"RxBin/Group[:\s]*([0-9]+)", text, re.IGNORECASE)
-    date_match = re.search(r"Date Issued[:\s]*([0-9/]+)", text, re.IGNORECASE)
-    primary_match = re.search(r"Primary[:\s]*\$?([0-9]+)", text, re.IGNORECASE)
-    specialist_match = re.search(r"Specialist[:\s]*\$?([0-9]+)", text, re.IGNORECASE)
-    urgent_match = re.search(r"Urgent Care[:\s]*\$?([0-9]+)", text, re.IGNORECASE)
-    er_match = re.search(r"ER[:\s]*\$?([0-9]+)", text, re.IGNORECASE)
-    rx_match = re.search(r"Prescription Drug[:\s]*([\\$0-9/ %]+)", text, re.IGNORECASE)
-    preventive_match = re.search(r"Preventive Care[:\s]*([A-Za-z ]+)", text, re.IGNORECASE)
+    # Extract common insurance fields
+    patterns = {
+        "subscriber_name": r"Subscriber Name[:\s]*([A-Za-z .]+)",
+        "subscriber_id": r"Subscriber ID[:\s]*([A-Z0-9]+)",
+        "group_no": r"Group No[:\s]*([0-9]+)",
+        "rxbin_group": r"RxBin/Group[:\s]*([0-9A-Z ]+)",
+        "date_issued": r"Date Issued[:\s]*([0-9/]+)",
+        "primary": r"Primary[:\s]*\$?([0-9]+)",
+        "specialist": r"Specialist[:\s]*\$?([0-9]+)",
+        "urgent_care": r"Urgent Care[:\s]*\$?([0-9]+)",
+        "er": r"ER[:\s]*\$?([0-9]+)",
+        "prescription_drug": r"Prescription Drug[:\s]*([\$0-9/ %\-]+)",
+        "preventive_care": r"Preventive Care[:\s]*([A-Za-z ]+)",
+        # Add copay and deductible patterns
+        "copay": r"Copay[:\s]*\$?([0-9]+)",
+        "deductible": r"Deductible[:\s]*\$?([0-9]+)",
+    }
+    for key, pat in patterns.items():
+        match = re.search(pat, text, re.IGNORECASE)
+        if match:
+            fields[key] = match.group(1).strip()
 
-    if name_match:
-        fields["subscriber_name"] = name_match.group(1).strip()
-    if id_match:
-        fields["subscriber_id"] = id_match.group(1).strip()
-    if group_match:
-        fields["group_no"] = group_match.group(1).strip()
-    if rxbin_match:
-        fields["rxbin_group"] = rxbin_match.group(1).strip()
-    if date_match:
-        fields["date_issued"] = date_match.group(1).strip()
-    if primary_match:
-        fields["primary"] = primary_match.group(1).strip()
-    if specialist_match:
-        fields["specialist"] = specialist_match.group(1).strip()
-    if urgent_match:
-        fields["urgent_care"] = urgent_match.group(1).strip()
-    if er_match:
-        fields["er"] = er_match.group(1).strip()
-    if rx_match:
-        fields["prescription_drug"] = rx_match.group(1).strip()
-    if preventive_match:
-        fields["preventive_care"] = preventive_match.group(1).strip()
+    # Generic extraction for all $-amounts and copay/deductible-like fields
+    dollar_fields = re.findall(r"([A-Za-z ]+?)[:\s\-]+\$([0-9]+(?:/[0-9]+)*(?:%|))", text)
+    for label, value in dollar_fields:
+        label_key = label.strip().lower().replace(" ", "_")
+        if label_key not in fields:
+            fields[label_key] = value.strip()
+
+    # Try to extract all key-value pairs (label: value)
+    key_value_pairs = re.findall(r"([A-Za-z][A-Za-z0-9 /-]+)[:\s]+([A-Za-z0-9$%/., -]+?)(?= [A-Z][a-zA-Z]+:|$)", text)
+    for label, value in key_value_pairs:
+        label_key = label.strip().lower().replace(" ", "_").replace("-", "_")
+        if label_key not in fields and len(value.strip()) > 0:
+            fields[label_key] = value.strip()
     fields["raw_text"] = text  # Add raw OCR text for debugging
     return fields
 
