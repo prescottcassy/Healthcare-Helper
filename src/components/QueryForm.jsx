@@ -31,24 +31,14 @@ function QueryForm() {
       body: formData
     });
     const data = await response.json();
-    // Prepare a user-friendly display of extracted fields if present
+    // Store extracted fields as plain data, not JSX
     let extractedFields = data.extracted_data;
-    let extractedFieldsDisplay = null;
-    if (extractedFields && typeof extractedFields === 'object' && Object.keys(extractedFields).length > 0) {
-      extractedFieldsDisplay = (
-        <ul style={{ margin: 0, paddingLeft: 20 }}>
-          {Object.entries(extractedFields).map(([key, value]) => (
-            <li key={key}><strong>{key}:</strong> {String(value)}</li>
-          ))}
-        </ul>
-      );
-    }
     setChatHistory(prev => [...prev, {
       query: `Uploaded file: ${file.name}`,
       response: {
         answer: "Extracted Data:",
-        extracted_text: JSON.stringify(data.extracted_data, null, 2),
-        extractedFieldsDisplay
+        extracted_text: JSON.stringify(extractedFields, null, 2),
+        extractedFields
       }
     }]);
     setLoading(false);
@@ -117,7 +107,13 @@ function QueryForm() {
                     </details>
                   )}
                   {/* Show extracted fields directly if present */}
-                  {chat.response.extractedFieldsDisplay}
+                  {chat.response.extractedFields && typeof chat.response.extractedFields === 'object' && Object.keys(chat.response.extractedFields).length > 0 && (
+                    <ul style={{ margin: 0, paddingLeft: 20 }}>
+                      {Object.entries(chat.response.extractedFields).map(([key, value]) => (
+                        <li key={key}><strong>{key}:</strong> {String(value)}</li>
+                      ))}
+                    </ul>
+                  )}
                   {/* Show raw extracted text as expandable details */}
                   {chat.response.extracted_text && (
                     <details className="bubble-details">
