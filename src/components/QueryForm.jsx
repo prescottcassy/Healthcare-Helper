@@ -107,18 +107,30 @@ function QueryForm() {
                       <pre>{JSON.stringify(chat.response.coverage, null, 2)}</pre>
                     </details>
                   )}
+
                   {/* Show extracted fields directly if present */}
-                  {chat.response.extractedFields && Object.keys(chat.response.extractedFields).length > 0 && (
+
+
+                  {/* Insurance card display: handle object, array, or string gracefully */}
+                  {chat.response.extractedFields && (
                     <div style={{ margin: '0.5em 0' }}>
                       <div style={{ fontWeight: 'bold', marginBottom: 4 }}>Here’s what I found on your insurance card:</div>
-                      <ul style={{ margin: 0, paddingLeft: 20 }}>
-                        {Object.entries(chat.response.extractedFields).map(([key, value]) => (
-                          <li key={key}><strong>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {String(value)}</li>
-                        ))}
-                      </ul>
+                      {Array.isArray(chat.response.extractedFields) ? (
+                        <div>{chat.response.extractedFields.join(' ')}</div>
+                      ) : typeof chat.response.extractedFields === 'object' ? (
+                        <ul style={{ margin: 0, paddingLeft: 20 }}>
+                          {Object.entries(chat.response.extractedFields).map(([key, value]) => (
+                            <li key={key}><strong>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {String(value)}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div>{String(chat.response.extractedFields)}</div>
+                      )}
                     </div>
                   )}
+
                   {/* Show chat answers */}
+
                   {chat.response.answer && (
                     <div style={{ margin: '0.5em 0' }}>{chat.response.answer}</div>
                   )}
