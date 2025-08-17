@@ -22,8 +22,6 @@ def extract_text_from_image(image_path: str) -> str:
 # Example function to extract insurance fields from OCR text
 
 def extract_insurance_fields(text: str) -> Dict[str, str]:
-    # Debug: print raw OCR text to logs for troubleshooting extraction
-    print("[OCR DEBUG] Raw text:", repr(text))
     fields = {}
     
     # Extract common insurance fields
