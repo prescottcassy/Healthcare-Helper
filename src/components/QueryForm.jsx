@@ -6,15 +6,27 @@ function QueryForm() {
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
 
+  // Store last extractedFields for use in chat
+  const [lastExtractedFields, setLastExtractedFields] = useState(null);
+
   async function getChatResponse() {
     setLoading(true);
-    const response = await fetch("https://healthcare-helper-pt6e.onrender.com/api/chat/chat", {
+    let apiUrl = "https://healthcare-helper-pt6e.onrender.com/api/chat/chat";
+    let body = { query };
+    // If we have extracted fields from insurance card, use the LLM endpoint and send card_fields
+    if (lastExtractedFields) {
+      apiUrl = "https://healthcare-helper-pt6e.onrender.com/api/llm/handle_chat_query";
+      body.card_fields = lastExtractedFields;
+    }
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query })
+      body: JSON.stringify(body)
     });
     const data = await response.json();
-    setChatHistory(prev => [...prev, { query, response: data }]);
+    // If using /llm/handle_chat_query, unwrap the result
+    const chatResponse = data.result ? data.result : data;
+    setChatHistory(prev => [...prev, { query, response: chatResponse }]);
     setLoading(false);
     setQuery("");
   }
@@ -31,9 +43,8 @@ function QueryForm() {
       body: formData
     });
     const data = await response.json();
-    // Store extracted fields as plain data, not JSX
-  // Use data.analysis for /api/insurance/analyze endpoint
-  let extractedFields = data.analysis;
+    let extractedFields = data.analysis;
+    setLastExtractedFields(extractedFields); // Save for chat use
     setChatHistory(prev => [...prev, {
       query: `Uploaded file: ${file.name}`,
       response: {
@@ -111,23 +122,7 @@ function QueryForm() {
                   {/* Show extracted fields directly if present */}
 
 
-                  {/* Insurance card display: handle object, array, or string gracefully */}
-                  {chat.response.extractedFields && (
-                    <div style={{ margin: '0.5em 0' }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: 4 }}>Here’s what I found on your insurance card:</div>
-                      {Array.isArray(chat.response.extractedFields) ? (
-                        <div>{chat.response.extractedFields.join(' ')}</div>
-                      ) : typeof chat.response.extractedFields === 'object' ? (
-                        <ul style={{ margin: 0, paddingLeft: 20 }}>
-                          {Object.entries(chat.response.extractedFields).map(([key, value]) => (
-                            <li key={key}><strong>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {String(value)}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div>{String(chat.response.extractedFields)}</div>
-                      )}
-                    </div>
-                  )}
+                  {/* Insurance card display: now handled by backend-formatted HTML in chat.response.answer */}
 
                   {/* Show chat answers */}
 
