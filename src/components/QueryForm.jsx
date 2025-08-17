@@ -109,18 +109,18 @@ function QueryForm() {
                   )}
                   {/* Show extracted fields directly if present */}
                   {chat.response.extractedFields && typeof chat.response.extractedFields === 'object' && Object.keys(chat.response.extractedFields).length > 0 && (
-                    <ul style={{ margin: 0, paddingLeft: 20 }}>
-                      {Object.entries(chat.response.extractedFields).map(([key, value]) => (
-                        <li key={key}><strong>{key}:</strong> {String(value)}</li>
-                      ))}
-                    </ul>
+                    <div style={{ margin: '0.5em 0' }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: 4 }}>Here’s what I found on your insurance card:</div>
+                      <ul style={{ margin: 0, paddingLeft: 20 }}>
+                        {Object.entries(chat.response.extractedFields).map(([key, value]) => (
+                          <li key={key}><strong>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {String(value)}</li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
-                  {/* Show raw extracted text as expandable details */}
-                  {chat.response.extracted_text && (
-                    <details className="bubble-details">
-                      <summary>Extracted Text (Raw JSON)</summary>
-                      <pre>{chat.response.extracted_text}</pre>
-                    </details>
+                  {/* Show chat answers */}
+                  {chat.response.answer && (
+                    <div style={{ margin: '0.5em 0' }}>{chat.response.answer}</div>
                   )}
                 </div>
               </React.Fragment>

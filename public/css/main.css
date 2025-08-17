@@ -457,36 +457,38 @@ button:hover {
 }
 .chat-bubble {
   max-width: 70%;
-  margin-bottom: 1.2rem;
-  padding: 1rem 1.2rem;
-  border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(56,189,248,0.08);
-  font-size: 1.08rem;
-  position: relative;
+  margin: 0.5em 0;
+  padding: 1em 1.2em;
+  border-radius: 1.2em;
+  font-size: 1.05em;
+  line-height: 1.5;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   word-break: break-word;
+  position: relative;
+  border: 1px solid #e0e4ea; /* Subtle border */
 }
+
 .user-bubble {
-  background: #fff;
+  background: #e6f0fa;
+  color: #1976d2;
   align-self: flex-end;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 18px;
-  border-bottom-left-radius: 18px;
-  border-top-left-radius: 18px;
-  border: 1px solid #dbeafe;
+  border-bottom-right-radius: 0.3em;
+  margin-left: auto;
 }
+
 .ai-bubble {
-  background: #eaf6ff;
+  background: #f5f5f7;
+  color: #222;
   align-self: flex-start;
-  border-top-left-radius: 4px;
-  border-bottom-right-radius: 18px;
-  border-bottom-left-radius: 18px;
-  border-top-right-radius: 18px;
-  border: 1px solid #38bdf8;
+  border-bottom-left-radius: 0.3em;
+  margin-right: auto;
 }
+
 .bubble-label {
   font-weight: bold;
-  color: #1976d2;
-  margin-right: 0.5rem;
+  margin-right: 0.5em;
+  opacity: 0.7;
+  font-size: 0.95em;
 }
 .confidence-badge {
   display: inline-block;
