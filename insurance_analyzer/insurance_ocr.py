@@ -81,40 +81,68 @@ def extract_insurance_fields(text: str) -> Dict[str, str]:
 
 
 def format_insurance_data(cleaned: Dict[str, str]) -> str:
-    # Capitalize keys and values, replace underscores with spaces
+    # Helper functions
     def beautify_key(key):
         return key.replace('_', ' ').title()
     def beautify_value(val):
-        # Capitalize first letter of each word, but keep numbers/symbols as is
         if isinstance(val, str):
             return ' '.join([w.capitalize() if w.isalpha() else w for w in val.split()])
         return val
 
-    # Find the user's name (subscriber_name or similar)
-    name_keys = [k for k in cleaned.keys() if 'name' in k]
-    user_name = None
-    for k in name_keys:
-        if cleaned[k]:
-            user_name = beautify_value(cleaned[k])
-            break
+    # Section fields
+    member_info = []
+    coverage = []
+    drug_coverage = []
+    notes = []
 
-    # Build output string
-    output = []
-    if user_name:
-        output.append(f"User Name: {user_name}\n")
+    # Member Information
+    if 'subscriber_name' in cleaned:
+        member_info.append(f"<li><b>Name:</b> {beautify_value(cleaned['subscriber_name'])}</li>")
+    if 'subscriber_id' in cleaned:
+        member_info.append(f"<li><b>Subscriber ID:</b> {beautify_value(cleaned['subscriber_id'])}</li>")
+    if 'group' in cleaned:
+        member_info.append(f"<li><b>Group:</b> {beautify_value(cleaned['group'])}</li>")
+    if 'date_issued' in cleaned:
+        member_info.append(f"<li><b>Date Issued:</b> {beautify_value(cleaned['date_issued'])}</li>")
+    if 'rxbin_group' in cleaned:
+        member_info.append(f"<li><b>RxBIN/Group:</b> {beautify_value(cleaned['rxbin_group'])}</li>")
 
-    # Exclude name fields from the rest
-    for k, v in cleaned.items():
-        if k in name_keys:
-            continue
-        key_str = beautify_key(k)
-        val_str = beautify_value(v)
-        # Only bullet if it's not a summary field
-        if key_str.lower() in ["responsibility", "members"]:
-            output.append(f"{key_str}: {val_str}")
-        else:
-            output.append(f"- {key_str}: {val_str}")
-    return '\n'.join(output)
+    # Coverage & Benefits
+    if 'primary' in cleaned:
+        coverage.append(f"<li><b>Primary Care Visit:</b> ${beautify_value(cleaned['primary'])}</li>")
+    if 'specialist' in cleaned:
+        coverage.append(f"<li><b>Specialist Visit:</b> ${beautify_value(cleaned['specialist'])}</li>")
+    if 'urgent_care' in cleaned:
+        coverage.append(f"<li><b>Urgent Care:</b> ${beautify_value(cleaned['urgent_care'])}</li>")
+    if 'er' in cleaned:
+        coverage.append(f"<li><b>Emergency Room (ER):</b> ${beautify_value(cleaned['er'])}</li>")
+    if 'preventive_care' in cleaned:
+        coverage.append(f"<li><b>Preventive Care:</b> {beautify_value(cleaned['preventive_care'])}</li>")
+
+    # Prescription Drug Coverage
+    if 'prescription_drug' in cleaned:
+        drug_coverage.append(f"<li><b>Prescription Drug:</b> {beautify_value(cleaned['prescription_drug'])}</li>")
+    if 'copay' in cleaned:
+        drug_coverage.append(f"<li><b>Copay:</b> ${beautify_value(cleaned['copay'])}</li>")
+    if 'deductible' in cleaned:
+        drug_coverage.append(f"<li><b>Deductible:</b> ${beautify_value(cleaned['deductible'])}</li>")
+
+    # Notes
+    if 'members' in cleaned:
+        notes.append(f"<li>Member: <b>{beautify_value(cleaned['members'])}</b></li>")
+    if 'responsibility' in cleaned:
+        notes.append(f"<li>{beautify_value(cleaned['responsibility'])}</li>")
+
+    html = ""
+    if member_info:
+        html += "<b>Member Information</b><ul>" + ''.join(member_info) + "</ul>"
+    if coverage:
+        html += "<hr><b>Coverage & Benefits</b><ul>" + ''.join(coverage) + "</ul>"
+    if drug_coverage:
+        html += "<hr><b>Prescription Drug Coverage</b><ul>" + ''.join(drug_coverage) + "</ul>"
+    if notes:
+        html += "<hr><b>Notes</b><ul>" + ''.join(notes) + "</ul>"
+    return html
 
 def analyze_insurance_card(image_path: str) -> dict:
     text = extract_text_from_image(image_path)
