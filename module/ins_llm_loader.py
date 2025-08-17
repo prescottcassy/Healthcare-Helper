@@ -1,3 +1,44 @@
+# --- CMS Provider Data Integration ---
+
+# Use relative import for cms_ingestion
+import os
+import sys
+cms_ingest_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data_ingestion/module/cms_ingestion'))
+if cms_ingest_path not in sys.path:
+    sys.path.append(cms_ingest_path)
+try:
+    from data_ingestion.module.cms_ingestion.cms_ingestion import fetch_cms_data
+except ImportError:
+    fetch_cms_data = None
+# Helper to wire extracted card fields to chat handler
+def answer_from_card_fields(query: str, card_fields: dict):
+    """
+    Call handle_chat_query with only card_fields for direct Q&A from insurance card extraction.
+    """
+    return handle_chat_query(query, card_fields=card_fields)
+
+# Example usage (for integration in API):
+# extracted_fields = {"copay": "25", "subscriber_name": "John Doe"}
+# user_query = "What is my copay?"
+# result = answer_from_card_fields(user_query, extracted_fields)
+# print(result["answer"])  # -> Your copay is 25
+
+# Cache CMS data at module load (can be improved for production)
+cms_provider_df = None
+if fetch_cms_data:
+    try:
+        cms_provider_df = fetch_cms_data()
+    except Exception as e:
+        cms_provider_df = None
+
+def search_cms_providers(query: str):
+    """Search CMS provider data for a provider name or specialty."""
+    if cms_provider_df is None or len(cms_provider_df) == 0:
+        return []
+    q = query.lower()
+    # Try to match provider name or specialty columns
+    results = cms_provider_df[cms_provider_df.apply(lambda row: q in str(row).lower(), axis=1)]
+    return results.to_dict(orient="records")[:5]  # Return top 5 matches
 # insurance_llm_loader.py
 
 import os
@@ -71,13 +112,14 @@ def match_plans_by_symptom(df, drugs):
 # Optional: Add a main() function for CLI or script usage
 
 # Chat handler for routing user queries
-def handle_chat_query(query: str, df=None, docs=None):
+def handle_chat_query(query: str, df=None, docs=None, card_fields=None):
     """
     Routes user queries to the appropriate function and returns a rich structured response.
     Args:
         query (str): The user's question or request.
         df (pd.DataFrame): Insurance dataframe (optional, for insurance queries).
         docs: Insurance docs (optional, for retrieval QA).
+        card_fields (dict): Extracted insurance card fields (optional, for direct Q&A).
     Returns:
         dict: Rich chat response with entities, recommendations, coverage, extracted text, confidence, etc.
     """
@@ -91,6 +133,32 @@ def handle_chat_query(query: str, df=None, docs=None):
         "confidence": 1.0,
         "patient_info": None
     }
+
+    # --- Direct Q&A from insurance card fields ---
+    if card_fields is not None and isinstance(card_fields, dict):
+        # Simple keyword matching for common insurance fields
+        for key in card_fields:
+            if key in query_lower or key.replace('_', ' ') in query_lower:
+                response["answer"] = f"{key.replace('_', ' ').title()}: {card_fields[key]}"
+                response["confidence"] = 1.0
+                return response
+        # Special handling for copay, deductible, etc.
+        for field in ["copay", "deductible", "primary", "specialist", "urgent_care", "er"]:
+            if field in query_lower and field in card_fields:
+                response["answer"] = f"Your {field.replace('_', ' ')} is {card_fields[field]}"
+                response["confidence"] = 1.0
+                return response
+
+    # --- CMS Provider Data Q&A ---
+    if ("medicare" in query_lower or "cms" in query_lower or "provider" in query_lower) and fetch_cms_data:
+        providers = search_cms_providers(query)
+        if providers:
+            response["answer"] = f"Found {len(providers)} Medicare providers for your query."
+            response["coverage"] = providers
+        else:
+            response["answer"] = "No Medicare providers found for your query."
+        return response
+
     # Drug suggestion based on symptom
     if "drug" in query_lower or "medicine" in query_lower or "symptom" in query_lower:
         for word in ["for ", "with ", "about ", "symptom "]:
@@ -151,6 +219,6 @@ def handle_chat_query(query: str, df=None, docs=None):
         response["answer"] = answer
         return response
     else:
-        response["answer"] = "Sorry, I couldn't understand your request. Please ask about drugs, insurance, or upload a card."
+        response["answer"] = "Sorry, I couldn't understand your request. Please ask about drugs, insurance, upload a card, or ask about Medicare providers."
         response["confidence"] = 0.5
         return response

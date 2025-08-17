@@ -12,6 +12,7 @@ class QueryRequest(BaseModel):
     name_input: Optional[str] = None
     file_path: Optional[str] = None
     drugs: Optional[List[str]] = None
+    card_fields: Optional[dict] = None
 
 @router.post("/load_insurance_data")
 def load_insurance_data_endpoint(path: str):
@@ -59,7 +60,14 @@ def match_plans_by_symptom_endpoint(path: str, drugs: List[str]):
     return {"result": result}
 
 @router.post("/handle_chat_query")
-def handle_chat_query_endpoint(query: str, path: str):
-    df, docs = ins_llm_loader.load_insurance_data(path)
-    result = ins_llm_loader.handle_chat_query(query, df, docs)
+def handle_chat_query_endpoint(request: QueryRequest, path: Optional[str] = None):
+    df, docs = (None, None)
+    if path:
+        df, docs = ins_llm_loader.load_insurance_data(path)
+    result = ins_llm_loader.handle_chat_query(
+        request.query,
+        df,
+        docs,
+        card_fields=request.card_fields
+    )
     return {"result": result}
