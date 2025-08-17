@@ -132,7 +132,9 @@ function QueryForm() {
                   {/* Show chat answers */}
 
                   {chat.response.answer && (
-                    <div style={{ margin: '0.5em 0' }}>{chat.response.answer}</div>
+                    <div style={{ margin: '0.5em 0' }}
+                      dangerouslySetInnerHTML={{ __html: chat.response.answer }}
+                    />
                   )}
                 </div>
               </React.Fragment>

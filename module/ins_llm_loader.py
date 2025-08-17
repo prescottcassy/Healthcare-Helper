@@ -1,3 +1,54 @@
+# Format insurance card fields for clean, sectioned display
+def format_insurance_card_fields(fields: dict) -> str:
+    member_info = []
+    coverage = []
+    drug_coverage = []
+    notes = []
+
+    # Member Information
+    if 'subscriber_name' in fields:
+        member_info.append(f"<li><b>Name:</b> {fields['subscriber_name']}</li>")
+    if 'group' in fields or 'copay' in fields:
+        member_info.append(f"<li><b>Group:</b> Copay: ${fields.get('copay', '')}</li>")
+    if 'subscriber_id' in fields:
+        member_info.append(f"<li><b>Subscriber ID:</b> {fields['subscriber_id']}</li>")
+    if 'rxbin_group' in fields:
+        member_info.append(f"<li><b>RxBIN/Group:</b> {fields['rxbin_group']}</li>")
+    if 'date_issued' in fields:
+        member_info.append(f"<li><b>Date Issued:</b> {fields['date_issued']}</li>")
+
+    # Coverage & Benefits
+    if 'primary' in fields:
+        coverage.append(f"<li><b>Primary Care Visit:</b> ${fields['primary']}</li>")
+    if 'specialist' in fields:
+        coverage.append(f"<li><b>Specialist Visit:</b> ${fields['specialist']}</li>")
+    if 'urgent_care' in fields:
+        coverage.append(f"<li><b>Urgent Care:</b> ${fields['urgent_care']}</li>")
+    if 'er' in fields:
+        coverage.append(f"<li><b>Emergency Room (ER):</b> ${fields['er']}</li>")
+    if 'preventive_care' in fields:
+        coverage.append(f"<li><b>Preventive Care:</b> {fields['preventive_care']}</li>")
+
+    # Prescription Drug Coverage
+    if 'prescription_drug' in fields or 'copays' in fields:
+        drug_coverage.append(f"<li><b>Copays:</b> {fields.get('prescription_drug', fields.get('copays', ''))}</li>")
+
+    # Notes
+    if 'members' in fields:
+        notes.append(f"<li>Member is <b>{fields['members']}</b>.</li>")
+    if 'responsibility' in fields:
+        notes.append(f"<li>{fields['responsibility']}.</li>")
+
+    html = ""
+    if member_info:
+        html += "<b>Member Information</b><ul>" + ''.join(member_info) + "</ul>"
+    if coverage:
+        html += "<hr><b>Coverage & Benefits</b><ul>" + ''.join(coverage) + "</ul>"
+    if drug_coverage:
+        html += "<hr><b>Prescription Drug Coverage</b><ul>" + ''.join(drug_coverage) + "</ul>"
+    if notes:
+        html += "<hr><b>Notes</b><ul>" + ''.join(notes) + "</ul>"
+    return html
 # --- CMS Provider Data Integration ---
 
 # Use relative import for cms_ingestion
@@ -190,18 +241,21 @@ def handle_chat_query(query: str, df=None, docs=None, card_fields=None):
 
     # --- Direct Q&A from insurance card fields ---
     if card_fields is not None and isinstance(card_fields, dict):
-        # Simple keyword matching for common insurance fields
+        # If the user asks a specific question, try to answer directly
         for key in card_fields:
             if key in query_lower or key.replace('_', ' ') in query_lower:
                 response["answer"] = f"{key.replace('_', ' ').title()}: {card_fields[key]}"
                 response["confidence"] = 1.0
                 return response
-        # Special handling for copay, deductible, etc.
         for field in ["copay", "deductible", "primary", "specialist", "urgent_care", "er"]:
             if field in query_lower and field in card_fields:
                 response["answer"] = f"Your {field.replace('_', ' ')} is {card_fields[field]}"
                 response["confidence"] = 1.0
                 return response
+        # Otherwise, return a formatted insurance card summary
+        response["answer"] = format_insurance_card_fields(card_fields)
+        response["confidence"] = 1.0
+        return response
 
     # --- CMS Provider Data Q&A ---
     if ("medicare" in query_lower or "cms" in query_lower or "provider" in query_lower) and fetch_cms_data:
