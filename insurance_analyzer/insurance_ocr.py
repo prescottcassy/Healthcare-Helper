@@ -79,7 +79,6 @@ def extract_insurance_fields(text: str) -> Dict[str, str]:
         label_key = label.strip().lower().replace(' ', '_').replace('-', '_')
         if label_key not in fields and len(value.strip()) > 0:
             fields[label_key] = value.strip()
-    fields["raw_text"] = text  # Add raw OCR text for debugging
     return fields
 
 # Main function to run OCR and extract fields
@@ -87,4 +86,10 @@ def extract_insurance_fields(text: str) -> Dict[str, str]:
 def analyze_insurance_card(image_path: str) -> Dict[str, str]:
     text = extract_text_from_image(image_path)
     fields = extract_insurance_fields(text)
-    return fields
+
+    # Remove raw_text and null-like entries
+    cleaned = {k: v for k, v in fields.items() if k != "raw_text" and v not in ["", "null", None]}
+    
+    # Optional: sort keys for consistent output
+    return dict(sorted(cleaned.items()))
+
