@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/Healthcare-Helper/static/js/main.2f1d9ad4.js",
+    "main.js": "/Healthcare-Helper/static/js/main.5bbac0da.js",
     "index.html": "/Healthcare-Helper/index.html",
-    "main.2f1d9ad4.js.map": "/Healthcare-Helper/static/js/main.2f1d9ad4.js.map"
+    "main.5bbac0da.js.map": "/Healthcare-Helper/static/js/main.5bbac0da.js.map"
   },
   "entrypoints": [
-    "static/js/main.2f1d9ad4.js"
+    "static/js/main.5bbac0da.js"
   ]
 }
