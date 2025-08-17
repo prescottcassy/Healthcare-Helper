@@ -47,8 +47,6 @@ def extract_insurance_fields(text: str) -> Dict[str, str]:
             fields[key] = match.group(1).strip()
 
     # Robust extraction for copay and deductible (handles line breaks, whitespace, end-of-line)
-    # Even more robust copay/deductible extraction: match across line breaks, any whitespace
-    # Enhanced copay extraction: match 'No Copay', '$X Copay', with any whitespace, line breaks, or OCR quirks
     copay_match = re.search(r'(\$\d+|No)[\s\n\r\t\-:]*Copay', text, re.IGNORECASE | re.MULTILINE)
     if not copay_match:
         copay_match = re.search(r'Copay[\s\n\r\t\-:]*([\$\d]+|No)', text, re.IGNORECASE | re.MULTILINE)
@@ -81,13 +79,50 @@ def extract_insurance_fields(text: str) -> Dict[str, str]:
 
 # Main function to run OCR and extract fields
 
-def analyze_insurance_card(image_path: str) -> Dict[str, str]:
+
+def format_insurance_data(cleaned: Dict[str, str]) -> str:
+    # Capitalize keys and values, replace underscores with spaces
+    def beautify_key(key):
+        return key.replace('_', ' ').title()
+    def beautify_value(val):
+        # Capitalize first letter of each word, but keep numbers/symbols as is
+        if isinstance(val, str):
+            return ' '.join([w.capitalize() if w.isalpha() else w for w in val.split()])
+        return val
+
+    # Find the user's name (subscriber_name or similar)
+    name_keys = [k for k in cleaned.keys() if 'name' in k]
+    user_name = None
+    for k in name_keys:
+        if cleaned[k]:
+            user_name = beautify_value(cleaned[k])
+            break
+
+    # Build output string
+    output = []
+    if user_name:
+        output.append(f"User Name: {user_name}\n")
+
+    # Exclude name fields from the rest
+    for k, v in cleaned.items():
+        if k in name_keys:
+            continue
+        key_str = beautify_key(k)
+        val_str = beautify_value(v)
+        # Only bullet if it's not a summary field
+        if key_str.lower() in ["responsibility", "members"]:
+            output.append(f"{key_str}: {val_str}")
+        else:
+            output.append(f"- {key_str}: {val_str}")
+    return '\n'.join(output)
+
+def analyze_insurance_card(image_path: str) -> str:
     text = extract_text_from_image(image_path)
     fields = extract_insurance_fields(text)
 
     # Remove raw_text and null-like entries
     cleaned = {k: v for k, v in fields.items() if k != "raw_text" and v not in ["", "null", None]}
-    
     # Optional: sort keys for consistent output
-    return dict(sorted(cleaned.items()))
+    cleaned = dict(sorted(cleaned.items()))
+    return format_insurance_data(cleaned)
 
