@@ -13,4 +13,5 @@ async def upload_insurance(file: UploadFile = File(...)):
 async def analyze_insurance(file: UploadFile = File(...)):
     contents = await file.read()
     result = extract_insurance_info(contents)
-    return {"analysis": result}
+    # result is {"fields": ..., "summary": ...}
+    return {"analysis": result["fields"], "summary": result["summary"]}

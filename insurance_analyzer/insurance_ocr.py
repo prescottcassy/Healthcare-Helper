@@ -116,7 +116,7 @@ def format_insurance_data(cleaned: Dict[str, str]) -> str:
             output.append(f"- {key_str}: {val_str}")
     return '\n'.join(output)
 
-def analyze_insurance_card(image_path: str) -> str:
+def analyze_insurance_card(image_path: str) -> dict:
     text = extract_text_from_image(image_path)
     fields = extract_insurance_fields(text)
 
@@ -124,5 +124,6 @@ def analyze_insurance_card(image_path: str) -> str:
     cleaned = {k: v for k, v in fields.items() if k != "raw_text" and v not in ["", "null", None]}
     # Optional: sort keys for consistent output
     cleaned = dict(sorted(cleaned.items()))
-    return format_insurance_data(cleaned)
+    summary = format_insurance_data(cleaned)
+    return {"fields": cleaned, "summary": summary}
 
