@@ -22,6 +22,8 @@ def extract_text_from_image(image_path: str) -> str:
 # Example function to extract insurance fields from OCR text
 
 def extract_insurance_fields(text: str) -> Dict[str, str]:
+    # Debug: print raw OCR text to logs for troubleshooting extraction
+    print("[OCR DEBUG] Raw text:", repr(text))
     fields = {}
     
     # Extract common insurance fields
@@ -48,21 +50,18 @@ def extract_insurance_fields(text: str) -> Dict[str, str]:
 
     # Robust extraction for copay and deductible (handles line breaks, whitespace, end-of-line)
     # Even more robust copay/deductible extraction: match across line breaks, any whitespace
-    copay_match = re.search(r'(\$\d+|No)\s*Copay', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
+    # Enhanced copay extraction: match 'No Copay', '$X Copay', with any whitespace, line breaks, or OCR quirks
+    copay_match = re.search(r'(\$\d+|No)[\s\n\r\t\-:]*Copay', text, re.IGNORECASE | re.MULTILINE)
     if not copay_match:
-        copay_match = re.search(r'Copay\s*:?\s*(\$\d+|No)', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
-    if not copay_match:
-        # Try to match 'No Copay' or '$X Copay' even if split by line breaks
-        copay_match = re.search(r'(No|\$\d+)\s*\n*\s*Copay', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
+        copay_match = re.search(r'Copay[\s\n\r\t\-:]*([\$\d]+|No)', text, re.IGNORECASE | re.MULTILINE)
     if copay_match:
         val = copay_match.group(1)
         fields['copay'] = val if val.lower() != 'no' else '0'
 
-    deductible_match = re.search(r'(\$\d+|No)\s*Deductible', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
+    # Enhanced deductible extraction: match 'No Deductible', '$X Deductible', with any whitespace, line breaks, or OCR quirks
+    deductible_match = re.search(r'(\$\d+|No)[\s\n\r\t\-:]*Deductible', text, re.IGNORECASE | re.MULTILINE)
     if not deductible_match:
-        deductible_match = re.search(r'Deductible\s*:?\s*(\$\d+|No)', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
-    if not deductible_match:
-        deductible_match = re.search(r'(No|\$\d+)\s*\n*\s*Deductible', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
+        deductible_match = re.search(r'Deductible[\s\n\r\t\-:]*([\$\d]+|No)', text, re.IGNORECASE | re.MULTILINE)
     if deductible_match:
         val = deductible_match.group(1)
         fields['deductible'] = val if val.lower() != 'no' else '0'
