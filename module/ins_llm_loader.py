@@ -10,7 +10,12 @@ try:
     from data_ingestion.module.cms_ingestion.cms_ingestion import fetch_cms_data
 except ImportError:
     fetch_cms_data = None
-# Helper to wire extracted card fields to chat handler
+
+
+# --- Provider/Doctor Recommendation Integration ---
+from module.rag_cost_recomm import HealthcareVectorDatabase
+vector_db = HealthcareVectorDatabase()
+
 def answer_from_card_fields(query: str, card_fields: dict):
     """
     Call handle_chat_query with only card_fields for direct Q&A from insurance card extraction.
@@ -113,6 +118,55 @@ def match_plans_by_symptom(df, drugs):
 
 # Chat handler for routing user queries
 def handle_chat_query(query: str, df=None, docs=None, card_fields=None):
+
+    query_lower = query.lower()
+    response = {
+        "answer": None,
+        "entities": {},
+        "recommendations": [],
+        "coverage": None,
+        "extracted_text": None,
+        "confidence": 1.0,
+        "patient_info": None
+    }
+
+    # --- Doctor/Provider Recommendation Logic ---
+    if ("doctor" in query_lower or "provider" in query_lower or "specialist" in query_lower or "clinic" in query_lower or "hospital" in query_lower or "near" in query_lower or "location" in query_lower):
+        import re
+        location = None
+        match = re.search(r'near ([\w\s]+)', query_lower)
+        if match:
+            location = match.group(1).strip()
+        elif "near me" in query_lower:
+            location = "my area"  # Could be replaced with user profile info
+        results = vector_db.search_procedures(query=query, location=location, n_results=5)
+        if results:
+            response["answer"] = f"Here are some providers near {location or 'you'}:"
+            response["recommendations"] = [f"{r['provider_name']} ({r['location']}) - {r['specialty']}" for r in results]
+            response["coverage"] = results
+        else:
+            response["answer"] = f"Sorry, I couldn't find any providers near {location or 'you'}."
+        return response
+
+    # --- Doctor/Provider Recommendation Logic ---
+    if ("doctor" in query_lower or "provider" in query_lower or "specialist" in query_lower or "clinic" in query_lower or "hospital" in query_lower or "near" in query_lower or "location" in query_lower):
+        # Try to extract location from query
+        import re
+        location = None
+        match = re.search(r'near ([\w\s]+)', query_lower)
+        if match:
+            location = match.group(1).strip()
+        elif "near me" in query_lower:
+            location = "my area"  # Could be replaced with user profile info
+        # Use vector DB to search for providers
+        results = vector_db.search_procedures(query=query, location=location, n_results=5)
+        if results:
+            response["answer"] = f"Here are some providers near {location or 'you'}:"
+            response["recommendations"] = [f"{r['provider_name']} ({r['location']}) - {r['specialty']}" for r in results]
+            response["coverage"] = results
+        else:
+            response["answer"] = f"Sorry, I couldn't find any providers near {location or 'you'}."
+        return response
     """
     Routes user queries to the appropriate function and returns a rich structured response.
     Args:
