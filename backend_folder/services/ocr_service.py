@@ -1,5 +1,5 @@
 import tempfile
-from ..insurance_analyzer import insurance_ocr
+from insurance_analyzer import insurance_ocr
 
 def extract_insurance_info(file_bytes: bytes) -> dict:
     """Extract insurance info from uploaded image file using insurance_ocr module"""
