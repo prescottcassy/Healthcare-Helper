@@ -48,7 +48,7 @@ function QueryForm() {
     setChatHistory(prev => [...prev, {
       query: `Uploaded file: ${file.name}`,
       response: {
-        answer: "Extracted Data:",
+        answer: data.summary || "", // Only show summary, no label
         extracted_text: JSON.stringify(extractedFields, null, 2),
         extractedFields
       }
