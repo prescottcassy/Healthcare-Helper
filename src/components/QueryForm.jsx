@@ -108,7 +108,7 @@ function QueryForm() {
                     </details>
                   )}
                   {/* Show extracted fields directly if present */}
-                  {chat.response.extractedFields && typeof chat.response.extractedFields === 'object' && Object.keys(chat.response.extractedFields).length > 0 && (
+                  {chat.response.extractedFields && Object.keys(chat.response.extractedFields).length > 0 && (
                     <div style={{ margin: '0.5em 0' }}>
                       <div style={{ fontWeight: 'bold', marginBottom: 4 }}>Here’s what I found on your insurance card:</div>
                       <ul style={{ margin: 0, paddingLeft: 20 }}>
