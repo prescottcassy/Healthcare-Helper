@@ -92,7 +92,7 @@ function QueryForm() {
                   <span className="bubble-label">You:</span> {chat.query}
                 </div>
                 <div className="chat-bubble ai-bubble">
-                  <span className="bubble-label">AI:</span> {chat.response.answer}
+                  <span className="bubble-label">AI:</span>
                   {chat.response.confidence !== undefined && (
                     <span className="confidence-badge">Confidence: {chat.response.confidence}</span>
                   )}
@@ -118,13 +118,6 @@ function QueryForm() {
                       <pre>{JSON.stringify(chat.response.coverage, null, 2)}</pre>
                     </details>
                   )}
-
-                  {/* Show extracted fields directly if present */}
-
-
-                  {/* Insurance card display: now handled by backend-formatted HTML in chat.response.answer */}
-
-                  {/* Show chat answers */}
 
                   {chat.response.answer && (
                     <div style={{ margin: '0.5em 0' }}
