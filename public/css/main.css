@@ -247,21 +247,18 @@ button:hover {
   border: 1px solid #e0e4ea; /* Subtle border */
 }
 
-.chat-bubble {
-  max-width: 70%;
-  margin: 0.5em 0;
-  padding: 1em 1.2em;
-  border-radius: 1.2em;
-  font-size: 1.05em;
-  line-height: 1.5;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  word-break: break-word;
-  position: relative;
-  border: 1px solid #e0e4ea; /* Original border color */
+.user-bubble {
+  background: #e6f0fa;
+  color: #1976d2;
+  align-self: flex-end;
+  border-bottom-right-radius: 0.3em;
+  margin-left: auto;
 }
-body {
-  border-top: 6px solid #D9D9D9;
-  border-bottom: 6px solid #D9D9D9;
+
+.ai-bubble {
+  background: #f5f5f7;
+  color: #222;
+  align-self: flex-start;
   border-bottom-left-radius: 0.3em;
   margin-right: auto;
 }
@@ -283,7 +280,7 @@ body {
 }
 .bubble-details {
   margin-top: 0.7rem;
-  background: #f4f8ff;
+  background: #dfdfdf;
   border-radius: 8px;
   padding: 0.7rem 1rem;
   font-size: 0.98rem;
