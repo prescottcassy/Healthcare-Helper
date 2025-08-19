@@ -150,7 +150,7 @@ def analyze_insurance_card(image_path: str) -> dict:
 
     # Remove raw_text and null-like entries
     cleaned = {k: v for k, v in fields.items() if k != "raw_text" and v not in ["", "null", None]}
-    # Optional: sort keys for consistent output
+    # sort keys for consistent output
     cleaned = dict(sorted(cleaned.items()))
     summary = format_insurance_data(cleaned)
     return {"fields": cleaned, "summary": summary}
